@@ -1,25 +1,22 @@
-from detection.shi_tomasi import get_corners
-from lib.grouping import group_points
-import cv2
-from lib.draw import draw_groups
+from lib.sift import extract_per_image, build_tracks
+from lib.trianulacija import parse_camera_file, triangulate_track
+
+# IMAGES = [f"TestImages/Entrance/entrance{i+1}.png" for i in range(12)]
+IMAGES = [f"TestImages/Box/box{i+1}.png" for i in range(12)]
 
 def main():
-    images = [f"TestImages/Box/box{i+1}.png" for i in range(12)]
+    cameras = parse_camera_file('TestImages/Box/boxInput.txt')
+    all_data = extract_per_image(IMAGES)
+    tracks   = build_tracks(all_data)
 
-    for img_path in images:
-        image = cv2.imread(img_path)
+    with open('output_points.csv', 'w') as f:
+        for marker_id, views in sorted(tracks.items()):
+            pt, err = triangulate_track(views, cameras)
+            if pt is not None:
+                f.write(f"{pt[0]:.6f},{pt[1]:.6f},{pt[2]:.6f},255,255,255\n")
 
-        corners = get_corners(image)
-        groups = group_points(corners)
+    return tracks
 
-        # draw grouped points
-        vis = draw_groups(image, groups)
-
-        cv2.imshow('Grouped Corners', vis)
-        cv2.waitKey(0)
-
-        print(groups)
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
+    print("Done :)")
