@@ -2,19 +2,24 @@
 
 Unusable mess :)
 
-Krenuli smo u ovo bez skoro ikakvog iskustva u computer grafici, ali smo pokusali rastaviti zadatak na nekakve jednostavnije zadatke koje mozemo medusobno podjeliti.
+Krenuli smo u ovo bez skoro ikakvog iskustva u računalnoj grafici, ali smo pokušali rastaviti zadatak na nekakve jednostavnije zadatke koje možemo međusobno podijeliti.
 
-Odlucili smo krenuti s detekcijom pozicija markera, jer je to slicnost koju svi testni podatci dijele i to nam se cinilo kao nekakva osnova na koju bi dalje gradili.
+Odlučili smo krenuti s detekcijom pozicija markera, jer je to sličnost koju svi testni podaci dijele i to nam se činilo kao nekakva osnova na kojoj bismo dalje gradili.
 
-Za to smo se podjelili na 3 dijela:
+## Struktura projekta
+Za to smo se podijelili na 3 dijela:
 
-- [Detekcija pozicija markera 2d](DETEKCIJA_2D.md)
-- [Odredivanje 3d pozicije markera pomocu pozicije kamere i triangulacije](TRIANGULACIJA.md)
-- [Prikazivanje 3d tocaka u prostoru za vizualizaciju i provijeru tocnosti rezultata](PRIKAZ.md)
+- **[Detekcija pozicija markera 2D](DETEKCIJA_2d.md)**
+  - Kako uopće skužiti gdje su točke na slici i povezati ih.
+- **[Određivanje 3D pozicija markera pomoću pozicije kamere i triangulacije](TRIANGULACIJA.md)**
+  - Kako od tih 2D točaka i pozicije kamere dobiti stvarne 3D točke u prostoru.
+- **[Prikazivanje 3D točaka u prostoru za vizualizaciju i provjeru točnosti rezultata](PRIKAZ.md)**
+  - Prikaz u Point Cloudu da vidimo jesmo li fulali ili to zapravo radi. (nije uspjelo, ali nesto se vidi)
 
-Kako pokrenuti:
-instaliraj requirements iz requirements.txt, napravi venv, conda whatever
-pokreni iz project roota
+## Kako pokrenuti
+
+1. Instaliraj requirements iz `requirements.txt`, napravi `venv`, `conda` *whatever*
+2. Pokreni iz root direktorija projekta
 
 > Potrebno je dodati dataset slike!
 
@@ -22,4 +27,6 @@ pokreni iz project roota
 python3 src/main.py
 ```
 
-Tokom rijesavanja naisli smo na mnoge probleme (u detaljnim opisima stepova pise vise) koje smo rijesili uglavnom vibecodanjem. Projekt je spor i neiskoristivo u realnim situacijama, ali sada imamo puno bolju ideju razlicitih nacina za rijesavanje koje bi mogli dosta detaljnije napraviti da imamo vise vremena.
+## Disclaimer
+Tijekom rješavanja naišli smo na mnoge probleme (u detaljnim opisima koraka piše više) koje smo riješili uglavnom vibe-codingom. Projekt je spor i neiskoristiv u realnim situacijama, ali sada imamo puno bolju ideju različitih načina za rješavanje koje bismo mogli dosta detaljnije napraviti da imamo više vremena i znanja.
+
