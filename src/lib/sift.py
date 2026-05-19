@@ -49,8 +49,6 @@ def extract_per_image(image_paths):
             "descriptors": kept_descs,
         })
 
-        print(f"{path}: {len(corners)} corners, {len(kept_kps)} SIFT kps near corners")
-
     return data
 
 # ── Step 2: match SIFT descriptors between every consecutive image pair ────────

@@ -114,41 +114,24 @@ def load_3d_points(file_path):
             points.append(np.array([x, y, z]))
 
     return points
-# ── 4. GLAVNI DIO ────────────────────────────────────────────
-cameras = parse_camera_file('./StemGames2026_ProjectTask/TestImages/Box/boxInput.txt')
-print(f"Učitano {len(cameras)} kamera")
 
-points_pixels = load_3d_points(FILPATH IDE OVDJE)
-slika_indeksi = [6, 7, 8]  # koje kamere koristimo (0-based, dakle slike 7,8,9)
-
-# ── 5. TRIANGULACIJA ─────────────────────────────────────────
-print("\nFINALNI REZULTATI:")
-print("=" * 50)
-
-sve_tocke = []
-
-for i, pt_pixels in enumerate(points_pixels):
+# ── 4. TRIANGULACIJA TRACKOVA ──────────────────────────────────
+def triangulate_track(views_dict, cameras, res_x=1920, res_y=1080):
+    img_indices = list(views_dict.keys())
+    if len(img_indices) < 2:
+        return None, float('inf')
     rays = []
-    for j, (px, py) in enumerate(pt_pixels):
-        cam = cameras[slika_indeksi[j]]
-        o, d = get_ray(px, py, cam)
+    for idx in img_indices:
+        px, py = views_dict[idx]
+        cam = cameras[idx]
+        o, d = get_ray(px, py, cam, res_x, res_y)
         rays.append((o, d))
-
-    # Probaj sve parove, uzmi najbolji (najmanja greška)
-    pairs = [(0,1), (0,2), (1,2)]
-    best_pt, best_err, best_pair = None, 999999, None
-    for a, b in pairs:
-        pt, err = triangulate(rays[a][0], rays[a][1], rays[b][0], rays[b][1])
-        if pt is not None and err < best_err:
-            best_pt, best_err, best_pair = pt, err, (slika_indeksi[a]+1, slika_indeksi[b]+1)
-
-    rounded = np.round(best_pt).astype(int)
-    sve_tocke.append(best_pt)
-    print(f"Točka {i+1} (par slika {best_pair[0]}-{best_pair[1]}, greška={best_err:.2f}):")
-    print(f"  X={rounded[0]}  Y={rounded[1]}  Z={rounded[2]}")
-    print()
-
-# ── 6. SPREMI ────────────────────────────────────────────────
-sve_tocke = np.array(sve_tocke)
-np.savetxt('./manualne_tocke_3d.txt', sve_tocke, fmt='%.2f', header='X Y Z', comments='')
-print("Spremljeno: manualne_tocke_3d.txt")
+        
+    best_pt, best_err = None, float('inf')
+    for i in range(len(rays)):
+        for j in range(i+1, len(rays)):
+            pt, err = triangulate(rays[i][0], rays[i][1], rays[j][0], rays[j][1])
+            if pt is not None and err < best_err:
+                best_pt, best_err = pt, err
+                
+    return best_pt, best_err
