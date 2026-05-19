@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STEM Games 2026 - 3D Point Cloud Visualizer & Align Tool</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-logo">
+                <span class="pulse-dot"></span>
+                <h1>STEM GAMES 2026</h1>
+                <span class="header-divider">|</span>
+                <span class="header-subtitle">3D POINT CLOUD ALIGNER & VISUALIZER</span>
+            </div>
+            <div class="server-status">
+                <span class="status-indicator online"></span>
+                <span class="status-text">HOST: LOCALHOST:8000</span>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <div class="main-layout">
+            <!-- SIDEBAR (LEFT) -->
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h2><i class="icon-dataset"></i> DATASET SELECTION</h2>
+                    <div class="control-group">
+                        <label for="dataset-select">Active Dataset</label>
+                        <select id="dataset-select" class="styled-select">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- CAMERA VIEW CONTROLS -->
+                <div class="sidebar-section">
+                    <h2><i class="icon-camera"></i> CAMERA POSE CALIBRATION</h2>
+                    <div class="control-group">
+                        <label for="camera-select">Align View to Camera</label>
+                        <div class="camera-navigation">
+                            <button id="prev-cam-btn" class="nav-btn">◀</button>
+                            <select id="camera-select" class="styled-select flex-grow">
+                                <option value="free">Free Orbit Camera</option>
+                            </select>
+                            <button id="next-cam-btn" class="nav-btn">▶</button>
+                        </div>
+                    </div>
+                    
+                    <div class="control-row">
+                        <div class="control-group half-width">
+                            <label for="lock-view-toggle">Lock Orbit</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="lock-view-toggle" disabled>
+                                <label for="lock-view-toggle"></label>
+                            </div>
+                        </div>
+                        <div class="control-group half-width">
+                            <label for="frustum-toggle">Show Cameras</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="frustum-toggle" checked>
+                                <label for="frustum-toggle"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="image-opacity">Image Overlay Opacity (<span id="opacity-val">0</span>%)</label>
+                        <div class="slider-container">
+                            <input type="range" id="image-opacity" min="0" max="100" value="0" class="styled-slider">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POINT CLOUD RENDERING -->
+                <div class="sidebar-section">
+                    <h2><i class="icon-render"></i> RENDERING SETTINGS</h2>
+                    <div class="control-group">
+                        <label for="point-size">Point Size (<span id="size-val">1.5</span> px)</label>
+                        <div class="slider-container">
+                            <input type="range" id="point-size" min="0.1" max="10" step="0.1" value="1.5" class="styled-slider">
+                        </div>
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-group half-width">
+                            <label for="color-mode">Color Mode</label>
+                            <select id="color-mode" class="styled-select">
+                                <option value="rgb">RGB (CSV)</option>
+                                <option value="elevation">Elevation (Z)</option>
+                                <option value="depth">Cam Depth</option>
+                                <option value="solid">Constant Color</option>
+                            </select>
+                        </div>
+                        <div class="control-group half-width" id="solid-color-group">
+                            <label for="solid-color-picker">Point Color</label>
+                            <input type="color" id="solid-color-picker" value="#58a6ff" class="styled-color-picker">
+                        </div>
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-group half-width">
+                            <label for="grid-toggle">Show Grid</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="grid-toggle" checked>
+                                <label for="grid-toggle"></label>
+                            </div>
+                        </div>
+                        <div class="control-group half-width">
+                            <label for="axes-toggle">Show Axes</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="axes-toggle" checked>
+                                <label for="axes-toggle"></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POINT CLOUD FILTERS -->
+                <div class="sidebar-section">
+                    <h2><i class="icon-filter"></i> POINT CLOUD FILTERS</h2>
+                    
+                    <!-- Filter 1: Z-Height Passthrough -->
+                    <div class="filter-card" id="card-filter-z">
+                        <div class="filter-header">
+                            <span class="filter-title">Z-Height Cut (Passthrough)</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="filter-z-enable">
+                                <label for="filter-z-enable"></label>
+                            </div>
+                        </div>
+                        <div class="filter-body" id="filter-z-body">
+                            <div class="control-group-mini">
+                                <label>Min Z: <span id="filter-z-min-val">-200</span></label>
+                                <input type="range" id="filter-z-min" min="-1200" max="1200" step="5" value="-200" class="styled-slider">
+                            </div>
+                            <div class="control-group-mini">
+                                <label>Max Z: <span id="filter-z-max-val">424</span></label>
+                                <input type="range" id="filter-z-max" min="-1200" max="1200" step="5" value="424" class="styled-slider">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter 2: Radius Outlier Removal (ROR) -->
+                    <div class="filter-card" id="card-filter-ror">
+                        <div class="filter-header">
+                            <span class="filter-title">Radius Outlier Removal (ROR)</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="filter-ror-enable">
+                                <label for="filter-ror-enable"></label>
+                            </div>
+                        </div>
+                        <div class="filter-body" id="filter-ror-body">
+                            <div class="control-group-mini">
+                                <label>Radius (R): <span id="filter-ror-rad-val">15.0</span></label>
+                                <input type="range" id="filter-ror-rad" min="1.0" max="50.0" step="0.5" value="15.0" class="styled-slider">
+                            </div>
+                            <div class="control-group-mini">
+                                <label>Min Neighbors (N): <span id="filter-ror-n-val">3</span></label>
+                                <input type="range" id="filter-ror-n" min="1" max="15" step="1" value="3" class="styled-slider">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter 3: Statistical Outlier Removal (SOR) -->
+                    <div class="filter-card" id="card-filter-sor">
+                        <div class="filter-header">
+                            <span class="filter-title">Statistical Outlier Removal (SOR)</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="filter-sor-enable">
+                                <label for="filter-sor-enable"></label>
+                            </div>
+                        </div>
+                        <div class="filter-body" id="filter-sor-body">
+                            <div class="control-group-mini">
+                                <label>Neighbors (k): <span id="filter-sor-k-val">16</span></label>
+                                <input type="range" id="filter-sor-k" min="2" max="50" step="1" value="16" class="styled-slider">
+                            </div>
+                            <div class="control-group-mini">
+                                <label>Std Ratio (α): <span id="filter-sor-ratio-val">1.2</span></label>
+                                <input type="range" id="filter-sor-ratio" min="0.1" max="3.0" step="0.1" value="1.2" class="styled-slider">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter 4: Local Surface Interpolation -->
+                    <div class="filter-card" id="card-filter-interp">
+                        <div class="filter-header">
+                            <span class="filter-title">Surface Interpolation (Density)</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="filter-interp-enable">
+                                <label for="filter-interp-enable"></label>
+                            </div>
+                        </div>
+                        <div class="filter-body" id="filter-interp-body">
+                            <div class="control-group-mini">
+                                <label>Neighbors (k): <span id="filter-interp-k-val">6</span></label>
+                                <input type="range" id="filter-interp-k" min="2" max="15" step="1" value="6" class="styled-slider">
+                            </div>
+                            <div class="control-group-mini">
+                                <label>Min Dist: <span id="filter-interp-min-val">8.0</span></label>
+                                <input type="range" id="filter-interp-min" min="1.0" max="30.0" step="0.5" value="8.0" class="styled-slider">
+                            </div>
+                            <div class="control-group-mini">
+                                <label>Max Dist: <span id="filter-interp-max-val">35.0</span></label>
+                                <input type="range" id="filter-interp-max" min="5.0" max="80.0" step="0.5" value="35.0" class="styled-slider">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INTERACTIVE 3D ALIGNMENT TOOL -->
+                <div class="sidebar-section">
+                    <h2><i class="icon-align"></i> INTERACTIVE 3D ALIGNMENT</h2>
+                    <div class="alignment-tabs">
+                        <button class="tab-btn active" data-tab="transform-tab">Align Points</button>
+                        <button class="tab-btn" data-tab="synthetic-tab">Synthetic Primitive</button>
+                    </div>
+
+                    <!-- TAB 1: TRANSFORM LOADED POINTS -->
+                    <div id="transform-tab" class="tab-content active">
+                        <div class="slider-group-title">Translation (X, Y, Z)</div>
+                        <div class="control-group-mini">
+                            <label>X: <span id="tx-val">0</span></label>
+                            <input type="range" id="trans-x" min="-200" max="200" step="1" value="0" class="styled-slider">
+                        </div>
+                        <div class="control-group-mini">
+                            <label>Y: <span id="ty-val">0</span></label>
+                            <input type="range" id="trans-y" min="-200" max="200" step="1" value="0" class="styled-slider">
+                        </div>
+                        <div class="control-group-mini">
+                            <label>Z: <span id="tz-val">0</span></label>
+                            <input type="range" id="trans-z" min="-200" max="200" step="1" value="0" class="styled-slider">
+                        </div>
+
+                        <div class="slider-group-title">Rotation (Pitch, Yaw, Roll)</div>
+                        <div class="control-group-mini">
+                            <div class="control-label-row">
+                                <label>Pitch (X): <span id="rx-val">0</span>°</label>
+                                <div class="step-buttons">
+                                    <button class="step-btn" data-axis="rx" data-step="-90">-90°</button>
+                                    <button class="step-btn" data-axis="rx" data-step="90">+90°</button>
+                                </div>
+                            </div>
+                            <input type="range" id="rot-x" min="-180" max="180" step="1" value="0" class="styled-slider">
+                        </div>
+                        <div class="control-group-mini">
+                            <div class="control-label-row">
+                                <label>Yaw (Y): <span id="ry-val">0</span>°</label>
+                                <div class="step-buttons">
+                                    <button class="step-btn" data-axis="ry" data-step="-90">-90°</button>
+                                    <button class="step-btn" data-axis="ry" data-step="90">+90°</button>
+                                </div>
+                            </div>
+                            <input type="range" id="rot-y" min="-180" max="180" step="1" value="0" class="styled-slider">
+                        </div>
+                        <div class="control-group-mini">
+                            <div class="control-label-row">
+                                <label>Roll (Z): <span id="rz-val">0</span>°</label>
+                                <div class="step-buttons">
+                                    <button class="step-btn" data-axis="rz" data-step="-90">-90°</button>
+                                    <button class="step-btn" data-axis="rz" data-step="90">+90°</button>
+                                </div>
+                            </div>
+                            <input type="range" id="rot-z" min="-180" max="180" step="1" value="0" class="styled-slider">
+                        </div>
+
+                        <div class="slider-group-title">Uniform Scale</div>
+                        <div class="control-group-mini">
+                            <label>Scale: <span id="scale-val">1.0</span>x</label>
+                            <input type="range" id="scale-all" min="0.1" max="5.0" step="0.05" value="1.0" class="styled-slider">
+                        </div>
+
+                        <button id="reset-transform-btn" class="action-btn secondary-btn mt-10">Reset Transform</button>
+                    </div>
+
+                    <!-- TAB 2: SYNTHETIC CUBE GENERATOR -->
+                    <div id="synthetic-tab" class="tab-content">
+                        <div class="control-group">
+                            <label for="synth-shape">Primitive Shape</label>
+                            <select id="synth-shape" class="styled-select">
+                                <option value="cube">Checkerboard Cube</option>
+                                <option value="grid">Dense Point Grid</option>
+                                <option value="sphere">Points Sphere</option>
+                            </select>
+                        </div>
+
+                        <div class="slider-group-title">Position (X, Y, Z)</div>
+                        <div class="control-group-mini">
+                            <label>X: <span id="s-tx-val">0</span></label>
+                            <input type="range" id="s-trans-x" min="-400" max="400" step="1" value="0" class="styled-slider">
+                        </div>
+                        <div class="control-group-mini">
+                            <label>Y: <span id="s-ty-val">0</span></label>
+                            <input type="range" id="s-trans-y" min="-400" max="400" step="1" value="0" class="styled-slider">
+                        </div>
+                        <div class="control-group-mini">
+                            <label>Z: <span id="s-tz-val">110</span></label>
+                            <input type="range" id="s-trans-z" min="0" max="1000" step="1" value="110" class="styled-slider">
+                        </div>
+
+                        <div class="slider-group-title">Dimensions (Width, Height, Depth)</div>
+                        <div class="control-group-mini">
+                            <label>W / Radius: <span id="s-w-val">80</span></label>
+                            <input type="range" id="s-dim-w" min="5" max="300" step="1" value="80" class="styled-slider">
+                        </div>
+                        <div id="dim-h-group" class="control-group-mini">
+                            <label>H: <span id="s-h-val">80</span></label>
+                            <input type="range" id="s-dim-h" min="5" max="300" step="1" value="80" class="styled-slider">
+                        </div>
+                        <div id="dim-d-group" class="control-group-mini">
+                            <label>D: <span id="s-d-val">80</span></label>
+                            <input type="range" id="s-dim-d" min="5" max="300" step="1" value="80" class="styled-slider">
+                        </div>
+
+                        <div class="slider-group-title">Rotation (Pitch, Yaw, Roll)</div>
+                        <div class="control-group-mini">
+                            <label>Pitch: <span id="s-rx-val">0</span>°</label>
+                            <input type="range" id="s-rot-x" min="-180" max="180" step="1" value="0" class="styled-slider">
+                        </div>
+                        <div class="control-group-mini">
+                            <label>Yaw: <span id="s-ry-val">0</span>°</label>
+                            <input type="range" id="s-rot-y" min="-180" max="180" step="1" value="0" class="styled-slider">
+                        </div>
+                        <div class="control-group-mini">
+                            <label>Roll: <span id="s-rz-val">0</span>°</label>
+                            <input type="range" id="s-rot-z" min="-180" max="180" step="1" value="0" class="styled-slider">
+                        </div>
+
+                        <div class="control-row mt-10">
+                            <div class="control-group half-width">
+                                <label for="synth-density">Density</label>
+                                <input type="number" id="synth-density" value="40" min="5" max="150" class="styled-number">
+                            </div>
+                            <div class="control-group half-width">
+                                <label for="synth-show">Render Shape</label>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="synth-show">
+                                    <label for="synth-show"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EXPORT FILE SECTION -->
+                <div class="sidebar-section">
+                    <h2><i class="icon-file"></i> DATA INTEGRATION</h2>
+                    <div class="data-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">Source Points:</span>
+                            <span id="points-count" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Synthetic Points:</span>
+                            <span id="synth-count" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Active Cameras:</span>
+                            <span id="cameras-count" class="stat-value">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Load Custom Point Cloud (.csv)</label>
+                        <input type="file" id="csv-file-loader" accept=".csv" class="hidden-file-input">
+                        <button id="upload-csv-btn" class="action-btn secondary-btn">Browse CSV file</button>
+                    </div>
+
+                    <button id="export-csv-btn" class="action-btn primary-btn mt-5">Export Aligned Points to CSV</button>
+                </div>
+            </aside>
+
+            <!-- VIEWPORT AREA (RIGHT) -->
+            <main class="viewport-area">
+                <!-- ASPECT-RATIO CONTROLLED CANVAS CONTAINER -->
+                <div id="canvas-container" class="canvas-container">
+                    <!-- Three.js Canvas -->
+                    <div id="webgl-canvas-target"></div>
+                    
+                    <!-- HTML Image Overlay for direct visual calibration alignment -->
+                    <img id="image-overlay" src="" alt="Camera View Overlay" style="opacity: 0;">
+
+                    <!-- Camera overlay loading state -->
+                    <div id="image-loading-indicator" class="loading-indicator hidden">
+                        <div class="spinner"></div>
+                        <span>Loading camera reference image...</span>
+                    </div>
+                </div>
+
+                <!-- FLOATING INFO CARDS (INSIDE VIEWPORT) -->
+                <!-- Active Camera Vectors Display -->
+                <div class="floating-card camera-details-card" id="camera-card">
+                    <div class="card-header">
+                        <h3>ACTIVE VIEWPORT CAMERA</h3>
+                        <span class="badge" id="camera-badge">Free orbit</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="vector-row">
+                            <span class="vector-label">POS</span>
+                            <span class="vector-values" id="cam-pos-xyz">X: 0.00 Y: 0.00 Z: 0.00</span>
+                        </div>
+                        <div class="vector-row">
+                            <span class="vector-label">FWD</span>
+                            <span class="vector-values" id="cam-fwd-xyz">X: 0.00 Y: 0.00 Z: -1.00</span>
+                        </div>
+                        <div class="vector-row">
+                            <span class="vector-label">RGT</span>
+                            <span class="vector-values" id="cam-rgt-xyz">X: 1.00 Y: 0.00 Z: 0.00</span>
+                        </div>
+                        <div class="vector-row">
+                            <span class="vector-label">UP</span>
+                            <span class="vector-values" id="cam-up-xyz">X: 0.00 Y: 1.00 Z: 0.00</span>
+                        </div>
+                        <div class="vector-row" id="intrinsics-row">
+                            <span class="vector-label">K</span>
+                            <span class="vector-values" id="cam-k-matrix">fx: 960 fy: 960 cx: 960 cy: 540</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Keyboard shortcuts and guide -->
+                <div class="floating-card controls-guide-card">
+                    <div class="card-header">
+                        <h3>NAVIGATION GUIDE</h3>
+                    </div>
+                    <div class="card-body font-small">
+                        <ul>
+                            <li><strong>Orbit Rotate:</strong> Left-Click & Drag</li>
+                            <li><strong>Pan Scene:</strong> Right-Click & Drag</li>
+                            <li><strong>Zoom View:</strong> Scroll wheel</li>
+                            <li><strong>Lock Camera:</strong> Enables camera reference overlays. Lock to camera, set opacity to ~50%, and adjust sliders in "Interactive 3D Alignment" to match points perfectly!</li>
+                        </ul>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

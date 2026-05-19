@@ -1,0 +1,40 @@
+# =====================================================================
+# STEM Games 2026 - 3D Visualizer & Aligner Dataset Configuration
+# =====================================================================
+#
+# UPUTE ZA KORIŠTENJE / INSTRUCTIONS:
+# Ovdje možete definirati vlastite putanje do .csv datoteka sa skeniranim
+# točkama za svaki od 4 dataset-a (Box, Entrance, Statue, Fountain).
+#
+# Pravila za putanje:
+# - Putanja može biti apsolutna (npr. C:\Projekti\Kolega\points.csv) ili
+#   relativna u odnosu na ovaj direktorij (npr. TestImages/Box/points.csv).
+# - Koristite kosa crte (/) ili dvostruke obrnute kose crte (\\).
+# - Ako ostavite prazno ili obrišete putanju, program će automatski tražiti
+#   "points.csv" unutar pripadajućeg "TestImages/<dataset_name>/" direktorija.
+#
+# FORMATIRANJE CSV DATOTEKE:
+# CSV datoteka mora biti strukturirana na jedan od sljedećih načina:
+# 1. Sa zaglavljem (preporučeno):
+#    Prvi redak mora sadržavati nazive stupaca: X, Y, Z (i opcionalno R, G, B).
+#    Separator može biti zarez (,) ili točka-zarez (;).
+#    Primjer:
+#       X,Y,Z,R,G,B
+#       12.34,-5.67,110.23,255,0,128
+#
+# 2. Bez zaglavlja (samo podaci):
+#    Prva tri stupca se uzimaju kao X, Y, Z koordinate.
+#    Ako postoje stupci 4, 5 i 6, oni se uzimaju kao R, G, B boje (0-255).
+#    Primjer:
+#       12.34,-5.67,110.23,255,0,128
+#
+# TIP PODATAKA:
+# - X, Y, Z: decimalni brojevi (Float/Real) koji predstavljaju 3D koordinate.
+# - R, G, B: cijeli brojevi (Integer, raspon 0 do 255) koji predstavljaju boju točke.
+#
+# ---------------------------------------------------------------------
+
+box_csv_path = TestImages/Box/box.csv
+entrance_csv_path = TestImages/Entrance/entrance.csv
+statue_csv_path = TestImages/Statue/statue.csv
+fountain_csv_path = TestImages/Fountain/fountain.csv
