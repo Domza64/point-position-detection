@@ -12,6 +12,7 @@ Za to smo se podijelili na 3 dijela:
 - **[Detekcija pozicija markera 2D](DETEKCIJA_2d.md)**
   - Kako uopće skužiti gdje su točke na slici i povezati ih.
 - **[Određivanje 3D pozicija markera pomoću pozicije kamere i triangulacije](TRIANGULACIJA.md)**
+- **[Određivanje 3D pozicija markera COLMAP-om](COLMAP.md)**
   - Kako od tih 2D točaka i pozicije kamere dobiti stvarne 3D točke u prostoru.
 - **[Prikazivanje 3D točaka u prostoru za vizualizaciju i provjeru točnosti rezultata](PRIKAZ.md)**
   - Prikaz u Point Cloudu da vidimo jesmo li fulali ili to zapravo radi. (nije uspjelo, ali nesto se vidi)
